@@ -30,25 +30,32 @@ def check_openmp():
 
 
 def get_extensions():
+    """
+    run setup.py with
 
-    sources = ["lacosmicx/_lacosmicx.pyx", "lacosmicx/laxutils.c"]
-
+    CFLAGS="-align  -xHOST -Ofast -O3 -unroll8 -fno-strict-aliasing" LDFLAGS="-L/progs/intel/ipsxe2016/parallel_studio_xe_2016.2.062/compilers_and_libraries_2016/linux/compiler/lib/intel64  -limf -lintlc -lrt -liomp5" CC=icc python2 setup.py install 
+    
+    # this will fail since the linking will be attempted with gcc, so replace gcc with icc in
+    gcc -pthread -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -I/progs/prerequisites/include -fPIC -I/progs/prerequisites/lib/python2.7/site-packages/numpy/core/include -I. -I/progs/prerequisites/include/python2.7 -c lacosmicx/_lacosmicx.c -o build/temp.linux-x86_64-2.7/lacosmicx/_lacosmicx.o -O3 -funroll-loops -ffast-math -qopenmp
+    """
+    sources = ["lacosmicx/_lacosmicx.pyx", "lacosmicx/laxutils.
     include_dirs = [numpy.get_include(), '.']
 
-    libraries = []
+    libraries = ['imf', 'intlc', 'rt']
+
 
     ext = Extension(name="_lacosmicx",
                     sources=sources,
                     include_dirs=include_dirs,
                     libraries=libraries,
                     language="c",
-                    extra_compile_args=['-g', '-O3',
+                    extra_compile_args=['-O3',
                                         '-funroll-loops', '-ffast-math'])
 
     has_openmp, outputs = check_openmp()
     if has_openmp:
-        ext.extra_compile_args.append('-fopenmp')
-        ext.extra_link_args = ['-g', '-fopenmp']
+        ext.extra_compile_args.append('-qopenmp')
+        ext.extra_link_args = ['-qopenmp']
     else:
         log.warn('OpenMP was not found. '
                  'lacosmicx will be compiled without OpenMP. '
